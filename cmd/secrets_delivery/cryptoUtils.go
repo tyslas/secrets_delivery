@@ -33,7 +33,7 @@ func encryptBytes256(pubKey rsa.PublicKey, bytes []byte) []byte {
 	return encryptedBytes
 }
 
-func decryptBytes(privateKey rsa.PrivateKey, encryptedBytes []byte) []byte {
+func decryptBytes256(privateKey rsa.PrivateKey, encryptedBytes []byte) []byte {
 	// The first argument is an optional random data generator (the rand.Reader we used before)
 	// we can set this value as nil
 	// The OAEPOptions in the end signify that we encrypted the data using OAEP, and that we used
