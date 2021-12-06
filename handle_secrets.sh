@@ -75,9 +75,12 @@ fi
 # encrypt message and secure copy to recipient's machine
 if [ "$IS_ENC" == "enc" ]; then
   echo "beginning encryption of message and sending to recipient"
+  # encrypt with recipient's public key
   openssl rsautl -encrypt -inkey "$PB_KEY" -pubin -in "$MSG" -out ./payload/encrypt.dat
+  # hash and sign with sender's private key
   openssl dgst -sha256 -sign "$PR_KEY" -out ./payload/sign.sha256 ./payload/encrypt.dat
   openssl base64 -in ./payload/sign.sha256 -out ./payload/signature.dat
+  # compress directory and secure copy to remote location
   tar czf ./payload/payload.tgz ./payload
   if [ -f ./payload/payload.tgz ]; then
     scp -i "$SSH_KEY" ./payload/payload.tgz "$USER"@"$IP":"$DEST_DIR"
@@ -90,13 +93,17 @@ fi
 # decrypt message
 if [ "$IS_ENC" == "dec" ]; then
   echo "verifying signature and decrypting"
+  # decompress payload
   tar xvzf payload.tgz
+  # validate signature with the sender's public key
   openssl base64 -d -in ./payload/signature.dat -out ./payload/sign.sha256
   openssl dgst -sha256 -verify "$PB_KEY" -signature ./payload/sign.sha256 ./payload/encrypt.dat
   status=$?
   if [ $status -eq 0 ]; then
     echo "signature verified... decrypting"
+    # decrypt message with the recipient's private key
     openssl rsautl -decrypt -inkey "$PR_KEY" -in ./payload/encrypt.dat -out ./decrypt.txt
+    # display the decrypted message
     cat ./decrypt.txt
   else
     echo "    unable to verify signature"
